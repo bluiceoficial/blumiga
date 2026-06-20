@@ -1,8 +1,8 @@
 # Blumiga
 
-Blumiga é um framework desenvolvido em PHP no paradigma Procedural seguindo o padrão de arquitetura de software MVC.
-
 Aviso: Projeto em Desenvolvimento
+
+Blumiga é um framework desenvolvido em PHP no paradigma Procedural seguindo o padrão de arquitetura de software MVC.
 
 ## 👤 Autor
 
