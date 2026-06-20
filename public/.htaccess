@@ -1,0 +1,71 @@
+#Proteger htaccess
+<Files .htaccess>
+<IfModule mod_authz_core.c>
+Require all denied
+</IfModule>
+<IfModule !mod_authz_core.c>
+Order deny,allow
+Deny from all
+</IfModule>
+</Files>
+
+Options -Indexes
+
+#Redirecionamento para www e porta 80
+<IfModule mod_rewrite.c>
+RewriteEngine On
+
+RewriteCond %{HTTP_HOST} !^www\. [NC]
+RewriteRule ^(.*)$ http://www.%{HTTP_HOST}/$1 [R=301,L]
+
+RewriteCond %{SERVER_PORT} 80
+RewriteRule ^(.*)$ https://%{HTTP_HOST}/$1 [R,L]
+</IfModule>
+
+#Url amigavel
+<IfModule mod_rewrite.c>
+RewriteEngine On
+RewriteBase /
+RewriteRule ^index\.php$ - [L]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule . /index.php [L]
+</IfModule>
+
+# BEGIN Cache-Control Headers
+<IfModule mod_headers.c>
+  <filesMatch "\.(ico|jpe?g|png|gif|swf)$">
+    Header set Cache-Control "max-age=2592000, public"
+  </filesMatch>
+  <filesMatch "\.(css)$">
+    Header set Cache-Control "max-age=604800, public"
+  </filesMatch>
+  <filesMatch "\.(js)$">
+    Header set Cache-Control "max-age=2592000, private"
+  </filesMatch>
+  <filesMatch "\.(x?html?)$">
+    Header set Cache-Control "max-age=600, private, must-revalidate"
+  </filesMatch>
+</IfModule>
+# END Cache-Control Headers
+
+# BEGIN Turn ETags Off
+<IfModule mod_headers.c>
+  Header unset ETag
+</IfModule>
+FileETag None
+# END Turn ETags Off
+
+# BEGIN Compress text files
+<IfModule mod_deflate.c>
+  <filesMatch "\.(css|js|x?html?|php)$">
+    SetOutputFilter DEFLATE
+  </filesMatch>
+</IfModule>
+# END Compress text files
+
+# Ativa o gzip
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/plain text/css application/json application/javascript text/xml application/xml application/xhtml+xml application/rss+xml application/atom+xml application/rdf+xml application/x-font application/x-font-opentype application/x-font-otf application/x-font-truetype application/x-font-ttf application/x-javascript application/javascript application/json image/svg+xml font/opentype font/otf font/ttf font/eot font/woff font/woff2
+  SetEnvIfNoCase Request_URI \.(?:gif|jpe?g|png)$ no-gzip
+</IfModule>

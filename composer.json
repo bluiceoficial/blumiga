@@ -1,0 +1,20 @@
+{
+    "name": "bluice/blufast",
+    "version": "1.0.0",
+    "authors": [
+        {
+            "name": "Murilo Gomes Julio",
+            "email": "murilo@bluice.com.br",
+            "homepage": "https://www.bluice.com.br"
+        }
+    ],
+    "_comment": [
+        "Copyright (C) 2026 Murilo Gomes Julio"
+    ],
+    "license": "GPL-2.0-only",
+    "autoload": {
+        "psr-4": {
+            "Blumiga\\": "libs/"
+        }
+    }
+}
