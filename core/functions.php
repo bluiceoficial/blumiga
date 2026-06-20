@@ -5,7 +5,6 @@
 // Site: https://www.bluice.com.br
 
 function model(string $model_path): string {
-    // Normaliza as barras
     $model_path = str_replace('\\', '/', $model_path);
 
     // Garante que o sufixo 'Model' exista no final do caminho informado
@@ -16,8 +15,6 @@ function model(string $model_path): string {
     // Pega apenas o nome do arquivo final (ex: 'homeModel')
     $parts = explode('/', $model_path);
     $model_name = end($parts);
-
-    // Caminho base da pasta de models do seu ecossistema
     $base_models_dir = dirname(__FILE__, 2) . '/app/models/';
 
     // Cenário A: O arquivo está direto na raiz (ex: app/models/homeModel.php)
@@ -29,7 +26,6 @@ function model(string $model_path): string {
         $file_path = $base_models_dir . $folder_name . '/' . $model_name . '.php';
     }
 
-    // Se encontrou em algum dos lugares, inclui o arquivo
     if (file_exists($file_path)) {
         require_once($file_path);
     } else {
