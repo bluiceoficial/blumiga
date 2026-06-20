@@ -1,11 +1,8 @@
 <?php
 if (!defined('blumiga')) exit;
 
-define('BLUMIGA_SANDBOX', true);
+$blumegaSandbox = true;
 
 $dbConfig['default'] = [
-    'server' => '',
-    'username' => '',
-    'password' => '',
-    'database' => ''
+
 ];
