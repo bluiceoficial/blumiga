@@ -4,7 +4,37 @@
 
 // Site: https://www.bluice.com.br
 
-function model(string $model_path): string {
+// rotas
+$blumiga_routeURLParts = array_values(array_filter(explode('/', $blumiga_routePath)));
+$blumiga_routeURLs = [$blumiga_routePath, $blumiga_routeURLParts];
+
+function getURL(int $number): string
+{
+    global $blumiga_routeURLs;
+    return empty($blumiga_routeURLs[1][$number]) ? '' : $blumiga_routeURLs[1][$number];
+}
+
+function getFirstURL(): string
+{
+    global $blumiga_routeURLs;
+    return empty($blumiga_routeURLs[1][0]) ? '' : $blumiga_routeURLs[1][0];
+}
+
+function getPenultimateURL(): string
+{
+    global $blumiga_routeURLs;
+    return empty($blumiga_routeURLs[1][count($blumiga_routeURLs[1]) - 2]) ? '' : $blumiga_routeURLs[1][count($blumiga_routeURLs[1]) - 2];
+}
+
+function getLastURL(): string
+{
+    global $blumiga_routeURLs;
+    return end($blumiga_routeURLs[1]);
+}
+
+// Models
+function model(string $model_path): string
+{
     $model_path = str_replace('\\', '/', $model_path);
 
     // Garante que o sufixo 'Model' exista no final do caminho informado
@@ -36,7 +66,9 @@ function model(string $model_path): string {
     return '\\Blumiga\\models\\' . $model_name . '\\';
 }
 
-function view(string $path, array $data = []): void {
+// Views
+function view(string $path, array $data = []): void
+{
     $sPath = dirname(__FILE__, 2) . '/app/views/' . $path . '.php';
 
     if (file_exists($sPath)) {
