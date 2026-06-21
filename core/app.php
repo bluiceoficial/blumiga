@@ -15,12 +15,13 @@ if ($blumegaSandbox) {
 
 require_once(dirname(__FILE__, 2) . '/vendor/autoload.php');
 
+$blumiga_routePath = parse_url(getenv('REQUEST_URI'), PHP_URL_PATH);
+
 require_once(__DIR__ . '/functions.php');
 require_once(__DIR__ . '/route.php');
 
 include_once(dirname(__FILE__, 2) . '/config/routes.php');
 
-$blumiga_routePath = parse_url(getenv('REQUEST_URI'), PHP_URL_PATH);
 $blumiga_routeMethod = getenv('REQUEST_METHOD');
 
 $route_found = false;
