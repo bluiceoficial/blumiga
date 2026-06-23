@@ -28,8 +28,28 @@ switch ($comando) {
         echo "\033[32m🚀 Iniciando o servidor de desenvolvimento do Blumiga...\033[0m\n";
         echo "Acesse: http://localhost:8080\n";
         echo "Pressione Ctrl+C para encerrar.\n";
-        // public/index.php como argumento força o roteamento correto das rotas no php -S
         passthru("php -S localhost:8080 -t public public/index.php");
+        break;
+
+    case 'make:controller':
+        if (!$parametro) {
+            die("\033[31mErro: Informe o nome do controller. Ex: php blumiga make:controller contatoController\033[0m\n");
+        }
+        criarController($parametro);
+        break;
+
+    case 'make:model':
+        if (!$parametro) {
+            die("\033[31mErro: Informe o nome do model. Ex: php blumiga make:model usuarioModel\033[0m\n");
+        }
+        criarModel($parametro);
+        break;
+
+    case 'make:view':
+        if (!$parametro) {
+            die("\033[31mErro: Informe o nome da view. Ex: php blumiga make:view contato/index\033[0m\n");
+        }
+        criarView($parametro);
         break;
 
     case 'make:migration':
@@ -68,7 +88,7 @@ switch ($comando) {
         break;
 }
 
-// --- FUNÇÕES AUXILIARES DA CLI (ABORDAGEM FUNCIONAL) ---
+// --- FUNÇÕES AUXILIARES DA CLI ---
 
 function exibirAjuda() {
     echo "\n\033[34m⚡ Blumiga CLI Funcional ⚡\033[0m\n\n";
@@ -76,6 +96,9 @@ function exibirAjuda() {
     echo "  php blumiga [comando] [argumento]\n\n";
     echo "\033[33mComandos Disponíveis:\033[0m\n";
     echo "  \033[32mserve\033[0m                  Inicia o servidor de desenvolvimento local na porta 8080.\n";
+    echo "  \033[32mmake:controller\033[0m        Cria um novo controller funcional dentro de app/controllers.\n";
+    echo "  \033[32mmake:model\033[0m             Cria um novo model dentro de app/models.\n";
+    echo "  \033[32mmake:view\033[0m              Cria um novo arquivo de view dentro de app/views.\n";
     echo "  \033[32mmake:migration\033[0m         Cria um arquivo de migration funcional (up/down).\n";
     echo "  \033[32mmake:seeder\033[0m            Cria um arquivo de seeder funcional (run/down).\n";
     echo "  \033[32mmigrate\033[0m                Executa as funções 'up' de todas as migrations.\n";
@@ -83,6 +106,121 @@ function exibirAjuda() {
     echo "  \033[32mdb:seed\033[0m                Alimenta o banco executando as funções 'run'.\n";
     echo "  \033[32mdb:seed:rollback\033[0m       Limpa os dados executando as funções 'down' dos seeders.\n";
     echo "  \033[32mhelp\033[0m                   Exibe este menu de ajuda.\n\n";
+}
+
+function criarController(string $nome): void {
+    $diretorio = __DIR__ . '/app/controllers';
+
+    // Suporte para subpastas. Ex: contato/contatoController
+    $partes = explode('/', $nome);
+    $nomeClasse = array_pop($partes);
+    $subPasta = implode('/', $partes);
+
+    $caminhoDiretorio = $diretorio . ($subPasta ? '/' . $subPasta : '');
+    if (!is_dir($caminhoDiretorio)) {
+        mkdir($caminhoDiretorio, 0755, true);
+    }
+
+    $namespaceAdicional = $subPasta ? '\\' . str_replace('/', '\\', $subPasta) : '';
+    $caminhoCompleto = "{$caminhoDiretorio}/{$nomeClasse}.php";
+
+    $template = "<?php
+// Nome: \Blumiga\controllers{$namespaceAdicional}\\{$nomeClasse}
+// Gerado em: " . date('Y-m-d H:i:s') . "
+
+namespace Blumiga\controllers{$namespaceAdicional};
+
+if (!defined('blumiga')) exit;
+
+/**
+ * Função index padrão do controller funcional
+ */
+function index(): void {
+    // Exemplo: view('home/index');
+    echo \"Bem-vindo ao Controller Funcional {$nomeClasse}!\";
+}
+";
+
+    file_put_contents($caminhoCompleto, $template);
+    echo "\033[32m✔ Controller criado em:\033[0m app/controllers/" . ($subPasta ? $subPasta . '/' : '') . "{$nomeClasse}.php\n";
+}
+
+function criarModel(string $nome): void {
+    $diretorio = __DIR__ . '/app/models';
+    if (!is_dir($diretorio)) {
+        mkdir($diretorio, 0755, true);
+    }
+
+    $caminhoCompleto = "{$diretorio}/{$nome}.php";
+    $nomeTabela = strtolower(str_replace('Model', '', $nome));
+
+    $template = "<?php
+// Model: {$nome}
+// Gerado em: " . date('Y-m-d H:i:s') . "
+
+namespace Blumiga\models;
+
+if (!defined('blumiga')) exit;
+
+use Blumiga\\database\\select;
+use Blumiga\\database\\insert;
+
+class {$nome} {
+    protected string \$table = '{$nomeTabela}';
+
+    public function buscarTodos(): array {
+        \$db = new select();
+        \$dados = \$db->table('{$nomeTabela}')->fetchArray();
+        \$db->close();
+        return \$dados ?? [];
+    }
+}
+";
+
+    file_put_contents($caminhoCompleto, $template);
+    echo "\033[32m✔ Model criado em:\033[0m app/models/{$nome}.php\n";
+}
+
+function criarView(string $nome): void {
+    $diretorio = __DIR__ . '/app/views';
+
+    $partes = explode('/', $nome);
+    $nomeArquivo = array_pop($partes);
+    $subPasta = implode('/', $partes);
+
+    $caminhoDiretorio = $diretorio . ($subPasta ? '/' . $subPasta : '');
+    if (!is_dir($caminhoDiretorio)) {
+        mkdir($caminhoDiretorio, 0755, true);
+    }
+
+    // Adiciona a extensão padrão do framework se não houver
+    if (!str_ends_with($nomeArquivo, '.php')) {
+        $nomeArquivo .= '.php';
+    }
+
+    $caminhoCompleto = "{$caminhoDiretorio}/{$nomeArquivo}";
+
+    $template = "<?php
+// View: " . ($subPasta ? $subPasta . '/' : '') . "{$nomeArquivo}
+// Gerado em: " . date('Y-m-d H:i:s') . "
+
+if (!defined('blumiga')) exit;
+?>
+<!DOCTYPE html>
+<html lang=\"pt-BR\">
+<head>
+    <meta charset=\"UTF-8\">
+    <title>Blumiga View</title>
+</head>
+<body>
+    <h1>Estilização Funcional Blumiga</h1>
+    <p>Sua view está pronta para renderizar os dados do escopo.</p>
+</body>
+</html>
+";
+
+    file_put_contents($caminhoCompleto, $template);
+    echo "\033[32m✔ View criada em:\033[0m app/views/" . ($subPasta ? $subPasta . '/' : '') . "{$nomeArquivo}\n";
 }
 
 function criarMigration(string $nome): void {
