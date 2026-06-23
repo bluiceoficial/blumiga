@@ -9,7 +9,10 @@ namespace Blumiga\cache;
 class filecache implements cacheInterface {
     private string $cacheDir;
 
-    public function __construct(string $cacheDir = __DIR__ . '/cache/') {
+    public function __construct(?string $cacheDir = null) {
+        if ($cacheDir === null) {
+            $cacheDir = dirname(__FILE__, 3) . '/storage/cache/';
+        }
         $this->cacheDir = rtrim($cacheDir, '/') . '/';
     }
 
