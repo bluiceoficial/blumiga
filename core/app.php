@@ -15,7 +15,7 @@ if ($blumegaSandbox) {
 
 require_once(dirname(__FILE__, 2) . '/vendor/autoload.php');
 
-$blumiga_routePath = parse_url(getenv('REQUEST_URI'), PHP_URL_PATH);
+$blumiga_routePath = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 
 require_once(__DIR__ . '/functions.php');
 require_once(__DIR__ . '/route.php');
