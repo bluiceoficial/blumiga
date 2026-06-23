@@ -22,7 +22,7 @@ require_once(__DIR__ . '/route.php');
 
 include_once(dirname(__FILE__, 2) . '/config/routes.php');
 
-$blumiga_routeMethod = getenv('REQUEST_METHOD');
+$blumiga_routeMethod = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 
 $route_found = false;
 
