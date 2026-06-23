@@ -1,6 +1,6 @@
 # Blumiga
 
-[![PHP Version](https://img.shields.io/badge/php-%253E%253D%25208.0-777bb4.svg)](https://www.php.net/)
+[![PHP Version](https://img.shields.io/badge/php->= 8.4-777bb4.svg)](https://www.php.net/)
 [![License](https://img.shields.io/badge/license-GPL--2.0--only-blue.svg)](LICENSE)
 
 > [!NOTE]
