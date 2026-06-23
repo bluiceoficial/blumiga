@@ -1,0 +1,275 @@
+#!/usr/bin/env php
+<?php
+// Copyright (C) 2026 Murilo Gomes Julio
+// SPDX-License-Identifier: GPL-2.0-only
+
+// Site: https://www.bluice.com.br
+
+if (php_sapi_name() !== 'cli') {
+    die('Este script só pode ser executado via linha de comando.');
+}
+
+define('blumiga', true);
+
+// 1. Carrega as configurações globais e o Autoload do Composer
+require_once __DIR__ . '/config/config.php';
+require_once __DIR__ . '/vendor/autoload.php';
+
+// Captura os argumentos do terminal
+$comando = $argv[1] ?? 'help';
+$parametro = $argv[2] ?? null;
+
+switch ($comando) {
+    case 'help':
+        exibirAjuda();
+        break;
+
+    case 'serve':
+        echo "\033[32m🚀 Iniciando o servidor de desenvolvimento do Blumiga...\033[0m\n";
+        echo "Acesse: http://localhost:8080\n";
+        echo "Pressione Ctrl+C para encerrar.\n";
+        // public/index.php como argumento força o roteamento correto das rotas no php -S
+        passthru("php -S localhost:8080 -t public public/index.php");
+        break;
+
+    case 'make:migration':
+        if (!$parametro) {
+            die("\033[31mErro: Informe o nome da migration. Ex: php blumiga make:migration criar_usuarios\033[0m\n");
+        }
+        criarMigration($parametro);
+        break;
+
+    case 'make:seeder':
+        if (!$parametro) {
+            die("\033[31mErro: Informe o nome do seeder. Ex: php blumiga make:seeder usuarios_padrao\033[0m\n");
+        }
+        criarSeeder($parametro);
+        break;
+
+    case 'migrate':
+        executarMigrations();
+        break;
+
+    case 'migrate:rollback':
+        executarRollbackMigrations();
+        break;
+
+    case 'db:seed':
+        executarSeeders($parametro);
+        break;
+
+    case 'db:seed:rollback':
+        executarRollbackSeeders($parametro);
+        break;
+
+    default:
+        echo "\033[31mComando '{$comando}' não reconhecido.\033[0m\n";
+        exibirAjuda();
+        break;
+}
+
+// --- FUNÇÕES AUXILIARES DA CLI (ABORDAGEM FUNCIONAL) ---
+
+function exibirAjuda() {
+    echo "\n\033[34m⚡ Blumiga CLI Funcional ⚡\033[0m\n\n";
+    echo "\033[33mUso:\033[0m\n";
+    echo "  php blumiga [comando] [argumento]\n\n";
+    echo "\033[33mComandos Disponíveis:\033[0m\n";
+    echo "  \033[32mserve\033[0m                  Inicia o servidor de desenvolvimento local na porta 8080.\n";
+    echo "  \033[32mmake:migration\033[0m         Cria um arquivo de migration funcional (up/down).\n";
+    echo "  \033[32mmake:seeder\033[0m            Cria um arquivo de seeder funcional (run/down).\n";
+    echo "  \033[32mmigrate\033[0m                Executa as funções 'up' de todas as migrations.\n";
+    echo "  \033[32mmigrate:rollback\033[0m       Executa as funções 'down' das migrations (ordem reversa).\n";
+    echo "  \033[32mdb:seed\033[0m                Alimenta o banco executando as funções 'run'.\n";
+    echo "  \033[32mdb:seed:rollback\033[0m       Limpa os dados executando as funções 'down' dos seeders.\n";
+    echo "  \033[32mhelp\033[0m                   Exibe este menu de ajuda.\n\n";
+}
+
+function criarMigration(string $nome): void {
+    $diretorio = __DIR__ . '/app/database/migrations';
+    if (!is_dir($diretorio)) {
+        mkdir($diretorio, 0755, true);
+    }
+
+    $timestamp = date('Y_m_d_His');
+    $nomeArquivo = "{$timestamp}_{$nome}.php";
+    $caminhoCompleto = "{$diretorio}/{$nomeArquivo}";
+
+    $template = "<?php
+// Migration Funcional: {$nome}
+// Gerado em: " . date('Y-m-d H:i:s') . "
+
+use Blumiga\\database\\table;
+
+return [
+    'up' => function() {
+        \$schema = new table();
+        // \$schema->table('nome_tabela')
+        //        ->int()->primaryKey()->autoIncrement()->add('id')
+        //        ->varchar(150)->add('nome')
+        //        ->create();
+        // \$schema->close();
+
+        echo \"\033[32mMigration Funcional UP executada com sucesso!\033[0m\\n\";
+    },
+
+    'down' => function() {
+        \$schema = new table();
+        // \$schema->table('nome_tabela')->drop();
+        // \$schema->close();
+
+        echo \"\033[33mMigration Funcional DOWN (Rollback) executada com sucesso!\033[0m\\n\";
+    }
+];
+";
+
+    file_put_contents($caminhoCompleto, $template);
+    echo "\033[32m✔ Migration funcional criada em:\033[0m app/database/migrations/{$nomeArquivo}\n";
+}
+
+function criarSeeder(string $nome): void {
+    $diretorio = __DIR__ . '/app/database/seeders';
+    if (!is_dir($diretorio)) {
+        mkdir($diretorio, 0755, true);
+    }
+
+    $nomeArquivo = "{$nome}Seeder.php";
+    $caminhoCompleto = "{$diretorio}/{$nomeArquivo}";
+
+    $template = "<?php
+// Seeder Funcional: {$nome}
+// Gerado em: " . date('Y-m-d H:i:s') . "
+
+use Blumiga\\database\\insert;
+use Blumiga\\database\\delete;
+
+return [
+    'run' => function() {
+        \$db = new insert();
+        // \$db->table('nome_tabela')->add('nome', 'Dados Iniciais')->insert();
+        // \$db->close();
+
+        echo \"\033[32mSeeder Funcional {$nome} populado com sucesso!\033[0m\\n\";
+    },
+
+    'down' => function() {
+        \$db = new delete();
+        // \$db->table('nome_tabela')->truncate(); // Ou ->delete() direcionado
+        // \$db->close();
+
+        echo \"\033[33mSeeder Funcional {$nome} limpo com sucesso (Rollback)!\033[0m\\n\";
+    }
+];
+";
+
+    file_put_contents($caminhoCompleto, $template);
+    echo "\033[32m✔ Seeder funcional criado em:\033[0m app/database/seeders/{$nomeArquivo}\n";
+}
+
+function executarMigrations() {
+    echo "\033[33mBuscando e executando migrations funcionais...\033[0m\n";
+    $diretorio = __DIR__ . '/app/database/migrations';
+
+    if (!is_dir($diretorio)) {
+        die("Nenhuma migration encontrada.\n");
+    }
+
+    $arquivos = glob("{$diretorio}/*.php");
+    sort($arquivos);
+
+    foreach ($arquivos as $arquivo) {
+        echo "Running UP: " . basename($arquivo) . "...\n";
+        $migration = require $arquivo;
+
+        if (isset($migration['up']) && is_callable($migration['up'])) {
+            $migration['up']();
+        }
+    }
+}
+
+function executarRollbackMigrations() {
+    echo "\033[33mIniciando Rollback das Migrations Funcionais (Ordem Reversa)...\033[0m\n";
+    $diretorio = __DIR__ . '/app/database/migrations';
+
+    if (!is_dir($diretorio)) {
+        die("Nenhuma migration encontrada.\n");
+    }
+
+    $arquivos = glob("{$diretorio}/*.php");
+    rsort($arquivos);
+
+    foreach ($arquivos as $arquivo) {
+        echo "Running DOWN: " . basename($arquivo) . "...\n";
+        $migration = require $arquivo;
+
+        if (isset($migration['down']) && is_callable($migration['down'])) {
+            $migration['down']();
+        } else {
+            echo "\033[31mErro: Função 'down' não encontrada ou inválida em " . basename($arquivo) . "\033[0m\n";
+        }
+    }
+}
+
+function executarSeeders(string $especifico = null): void {
+    $diretorio = __DIR__ . '/app/database/seeders';
+
+    if (!is_dir($diretorio)) {
+        die("Nenhum seeder encontrado.\n");
+    }
+
+    if ($especifico) {
+        $arquivo = "{$diretorio}/{$especifico}Seeder.php";
+        if (file_exists($arquivo)) {
+            echo "Seeding: " . basename($arquivo) . "...\n";
+            $seeder = require $arquivo;
+            if (isset($seeder['run']) && is_callable($seeder['run'])) {
+                $seeder['run']();
+            }
+        } else {
+            echo "\033[31mSeeder '{$especifico}Seeder.php' não encontrado.\033[0m\n";
+        }
+    } else {
+        echo "\033[33mExecutando todos os seeders funcionais encontrados...\033[0m\n";
+        $arquivos = glob("{$diretorio}/*.php");
+        sort($arquivos);
+        foreach ($arquivos as $arquivo) {
+            echo "Seeding: " . basename($arquivo) . "...\n";
+            $seeder = require $arquivo;
+            if (isset($seeder['run']) && is_callable($seeder['run'])) {
+                $seeder['run']();
+            }
+        }
+    }
+}
+
+function executarRollbackSeeders(string $especifico = null): void {
+    $diretorio = __DIR__ . '/app/database/seeders';
+
+    if (!is_dir($diretorio)) {
+        die("Nenhum seeder encontrado.\n");
+    }
+
+    if ($especifico) {
+        $arquivo = "{$diretorio}/{$especifico}Seeder.php";
+        if (file_exists($arquivo)) {
+            echo "Rolling back Seeder: " . basename($arquivo) . "...\n";
+            $seeder = require $arquivo;
+            if (isset($seeder['down']) && is_callable($seeder['down'])) {
+                $seeder['down']();
+            }
+        } else {
+            echo "\033[31mSeeder '{$especifico}Seeder.php' não encontrado.\033[0m\n";
+        }
+    } else {
+        echo "\033[33mLimpando todos os seeders funcionais (Ordem Reversa)...\033[0m\n";
+        $arquivos = glob("{$diretorio}/*.php");
+        rsort($arquivos);
+        foreach ($arquivos as $arquivo) {
+            $seeder = require $arquivo;
+            if (isset($seeder['down']) && is_callable($seeder['down'])) {
+                echo "Rolling back Seeder: " . basename($arquivo) . "...\n";
+                $seeder['down']();
+            }
+        }
+    }
+}
