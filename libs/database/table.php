@@ -275,6 +275,52 @@ class table extends database
         return $this;
     }
 
+    public function dropColumn(string|array $columns): self
+    {
+        try {
+            if (empty($columns)) return $this;
+
+            $tableName = "`" . trim($this->getTable(), "`") . "`";
+
+            $columnsArray = is_array($columns) ? $columns : [$columns];
+
+            // Limpa e formata os nomes das colunas com backticks para evitar quebras por nomes reservados
+            $formattedColumns = array_map(function($col) {
+                return "`" . trim($col, "`") . "`";
+            }, $columnsArray);
+
+            $dropSyntax = 'DROP COLUMN ' . implode(', DROP COLUMN ', $formattedColumns);
+            $txt = sprintf('ALTER TABLE %s %s', $tableName, $dropSyntax);
+
+            mysqli_query($this->sConecta, $txt);
+
+            $this->sFechaResult = false;
+            $this->cleanAll();
+
+        } catch (\mysqli_sql_exception $ex) {
+            $this->log($ex);
+        }
+
+        return $this;
+    }
+
+    public function drop(): self
+    {
+        try {
+            $tableName = "`" . trim($this->getTable(), "`") . "`";
+
+            $txt = sprintf('DROP TABLE IF EXISTS %s', $tableName);
+
+            mysqli_query($this->sConecta, $txt);
+
+            $this->sFechaResult = false;
+            $this->cleanAll();
+        } catch (\mysqli_sql_exception $ex) {
+            $this->log($ex);
+        }
+        return $this;
+    }
+
     public function columnExists(string $column): bool
     {
         $exists = false;
