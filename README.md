@@ -71,8 +71,6 @@ composer install
 O construtor do banco lê o array global `$dbConfig` e opcionalmente valida o modo `$blumigaDev` para depuração visual:
 
 ```php
-global $dbConfig, $blumigaDev;
-
 $blumigaDev = true; // Exibe erros estruturados em tela se em desenvolvimento
 
 $dbConfig = [
