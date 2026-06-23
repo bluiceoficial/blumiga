@@ -60,10 +60,10 @@ meu-projeto/
 
 ### 1. Inicializar o Autoload
 
-Dentro do diretório raiz do projeto, rode o comando:
+Rode o comando abaixo para preparar o projeto:
 
 ```bash
-composer install
+composer create-project bluice/blumiga nomedoprojeto
 ```
 
 ### 🗄️ 3. Configuração de Conexão (`config/config.php`)
