@@ -1,7 +1,7 @@
 <?php
 if (!defined('blumiga')) exit;
 
-$blumegaSandbox = true;
+$blumigaSandbox = true;
 
 $dbConfig['default'] = [
 

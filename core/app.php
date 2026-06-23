@@ -8,7 +8,7 @@ if (!defined('blumiga')) exit;
 
 require_once(dirname(__FILE__, 2) . '/config/config.php');
 
-if ($blumegaSandbox) {
+if ($blumigaSandbox) {
     error_reporting(E_ALL);
     ini_set('display_errors', true);
 }
