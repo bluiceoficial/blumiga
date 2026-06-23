@@ -41,4 +41,21 @@ class delete extends database
             return $this;
         }
     }
+
+    public function truncate(): self
+    {
+        try {
+            $tableName = "`" . trim($this->getTable(), "`") . "`";
+
+            $txt = sprintf('TRUNCATE TABLE %s', $tableName);
+
+            mysqli_query($this->sConecta, $txt);
+
+            $this->sFechaResult = false;
+            $this->clearQueryState();
+        } catch (\mysqli_sql_exception $ex) {
+            $this->log($ex);
+        }
+        return $this;
+    }
 }
