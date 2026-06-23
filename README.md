@@ -14,7 +14,7 @@ O **Blumiga** é um framework PHP ultra-leve, veloz e seguro, estruturado sob o 
 
 Certifique-se de que seu ambiente atende aos requisitos mínimos para garantir a estabilidade do núcleo:
 
-* **PHP:** Versão 8.0 ou superior (com suporte a *Union Types*, tipos estritos e funções CSPRNG).
+* **PHP:** Versão 8.4 ou superior (com suporte a *Union Types*, tipos estritos e funções CSPRNG).
 * **Servidor Web:** Apache (`mod_rewrite` ativo).
 * **Banco de Dados:** MySQL 5.7+ ou MariaDB 10.3+.
 * **Composer:** Para gerenciamento do autoload estrutural do framework.
