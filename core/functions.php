@@ -148,10 +148,7 @@ function servername(bool $comprotocolo = true, bool $semwww = false): string
     return $protocolo . $servername;
 }
 
-/**
- * Request Path
- * Retorna a URI tratada e limpa para o sistema de rotas.
- */
+// Request Path: Retorna a URI tratada e limpa para o sistema de rotas
 function requestURI(): string
 {
     $requestUri = $_SERVER['REQUEST_URI'] ?? '/';
