@@ -68,12 +68,12 @@ composer install
 
 ### 🗄️ 3. Configuração de Conexão (`config/config.php`)
 
-O construtor do banco lê o array global `$dbConfig` e opcionalmente valida o modo `$blumigaSandbox` para depuração visual:
+O construtor do banco lê o array global `$dbConfig` e opcionalmente valida o modo `$blumigaDev` para depuração visual:
 
 ```php
-global $dbConfig, $blumigaSandbox;
+global $dbConfig, $blumigaDev;
 
-$blumigaSandbox = true; // Exibe erros estruturados em tela se em desenvolvimento
+$blumigaDev = true; // Exibe erros estruturados em tela se em desenvolvimento
 
 $dbConfig = [
     'default' => [
