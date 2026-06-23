@@ -3,7 +3,8 @@
 [![PHP Version](https://img.shields.io/badge/php-%253E%253D%25208.0-777bb4.svg)](https://www.php.net/)
 [![License](https://img.shields.io/badge/license-GPL--2.0--only-blue.svg)](LICENSE)
 
-Aviso: Projeto em Desenvolvimento
+> [!NOTE]
+> **Status do Projeto:** Em desenvolvimento ativo. Atualmente implementando recursos.
 
 O **Blumiga** é um framework PHP ultra-leve, veloz e seguro, estruturado sob o paradigma **MVC (Model-View-Controller)** adaptado para funções modernas isoladas por Namespaces. Desenvolvido para entregar máxima performance e controle absoluto sobre o fluxo da aplicação, o ecossistema elimina o overhead de ferramentas inchadas ao integrar um sistema de rotas dinâmicas, um **Query Builder nativo especialista (MySQLi)** e um **Mecanismo de Cache em Disco** de alta velocidade.
 
