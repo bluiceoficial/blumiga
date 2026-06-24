@@ -41,10 +41,12 @@ meu-projeto/
 │   ├── config.php      # Constantes de Ambiente, Iniciação de Erros e $dbConfig
 │   └── routes.php      # Definições centrais de Rotas e Grupos de Acesso
 ├── core/
-│   ├── database/       # Core Data Layer (database, select, insert, update, delete, table)
 │   ├── functions.php   # Helpers Globais de Sanitização, IP, Datas, Idioma e Segurança
-│   ├── index.php       # Orquestrador Geral e Ciclo de Vida do Framework
+│   ├── app.php       # Orquestrador Geral e Ciclo de Vida do Framework
 │   └── route.php       # Motor interno de Matching de URLs e Closures
+├── libs/
+│   ├── cache/       # Trabalhar com armazenamento de dados em cache
+│   └── database/ # Trabalhar com banco de dados MySQL/MariaDB
 ├── public/
 │   └── index.php       # Ponto de entrada universal único (Single Entry Point)
 ├── storage/
