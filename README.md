@@ -68,7 +68,7 @@ Rode o comando abaixo para preparar o projeto:
 composer create-project bluice/blumiga nomedoprojeto
 ```
 
-### 🗄️ 3. Configuração de Conexão (`config/config.php`)
+### 🗄️ 2. Configuração de Conexão (`config/config.php`)
 
 O construtor do banco lê o array global `$dbConfig` e opcionalmente valida o modo `$blumigaDev` para depuração visual:
 
@@ -102,10 +102,10 @@ routeGET('/contato', 'contatoController@pageContato', 'site.contato');
 // Rota Dinâmica Capturada com Parâmetros
 routeGET('/produto/{id}/{slug}', 'produtoController@detalhe', 'produto.ver');
 
-// Agrupamento de Escopo e Sub-Namespace Físico (app/controllers/admin/)
-routeGroup('admin', function() {
-    routeGET('/admin/dashboard', 'dashboardController@index', 'admin.dashboard');
-    routePOST('/admin/salvar', 'dashboardController@store');
+// Define um grupo de rotas que compartilham o mesmo prefixo de URL e a mesma pasta de controllers
+routeGroup('/admin', 'admin', function() {
+    routeGET('/dashboard', 'dashboardController@index', 'admin.dashboard');
+    routePOST('/salvar', 'dashboardController@store');
 });
 
 // Manipulador de Fallback para Páginas Não Encontradas
@@ -159,6 +159,7 @@ $usuarios = $db->table('usuarios')
                ->limit(0, 15)
                ->select()
                ->fetchAll();
+$db->close();
 
 // Exemplo 2: Prepared Statement nativo anti-SQLInjection
 $resultado = $db->table('usuarios')
@@ -169,7 +170,7 @@ $resultado = $db->table('usuarios')
                 ->prepared($senhaHash, 's')
                 ->select()
                 ->fetchAssoc();
-
+$db->close();
 ```
 
 #### 📥 Inserção de Dados (`insert`)
@@ -186,6 +187,8 @@ $query = $db->table('produtos')
 
 $novoId = $query->idinsert();
 
+$db->close();
+
 ```
 
 #### 🆙 Atualização de Dados (`update`)
@@ -197,7 +200,7 @@ $db = new update();
 $db->table('usuarios')
    ->add('ultimo_login', date('Y-m-d H:i:s'))
    ->where('id', 42)
-   ->update();
+   ->update()->close();
 
 ```
 
@@ -210,7 +213,7 @@ $db = new delete();
 $db->table('sessoes')
    ->where('expira_em', '<', date('Y-m-d H:i:s'))
    ->semIgual() // Remove o operador '=' para aceitar filtros customizados no where
-   ->delete();
+   ->delete()->close();
 
 ```
 
@@ -229,7 +232,7 @@ $schema->table('clientes')
        ->varchar(14)->null()->add('cnpj')
        ->decimal(10, 2)->defaultValueZero()->add('limite_credito')
        ->datetime()->add('criado_em')
-       ->create();
+       ->create()->close();
 
 ```
 
