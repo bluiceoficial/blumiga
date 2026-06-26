@@ -306,7 +306,7 @@ echo formatCurrency(2490.50); // Exemplo: R$ 2.490,50
 
 The Blumiga is provided under:
 
-[SPDX-License-Identifier: GPL-2.0-only](https://codeberg.org/bluice/blumiga/src/branch/main/LICENSE)
+[SPDX-License-Identifier: GPL-2.0-only](https://github.com/bluiceoficial/blumiga/blob/main/LICENSE)
 
 Beign under the terms of the GNU General Public License version 2 only.
 
