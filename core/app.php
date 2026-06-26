@@ -28,7 +28,12 @@ $route_found = false;
 
 if (isset($blumiga_routes[$blumiga_routeMethod])) {
     foreach ($blumiga_routes[$blumiga_routeMethod] as $registered_path => $route_data) {
-        $pattern = preg_replace('/\{[a-zA-Z0-9_]+\}/', '([^/]+)', $registered_path);
+        // Se encontrar algo como {id:[0-9]+}, ele usa '[0-9]+'. Se encontrar apenas {id}, usa '[^/]+'
+        $pattern = preg_replace_callback('/\{([a-zA-Z0-9_]+)(?::([^}]+))?\}/', function ($matches) {
+            // Se existir uma regex customizada após o ':', usa ela. Se não, usa o padrão para qualquer caractere
+            return isset($matches[2]) ? '(' . $matches[2] . ')' : '([^/]+)';
+        }, $registered_path);
+
         $pattern = '#^' . $pattern . '/?$#';
 
         if (preg_match($pattern, $blumiga_routePath, $matches)) {
@@ -38,7 +43,7 @@ if (isset($blumiga_routes[$blumiga_routeMethod])) {
             $sub_ns         = $route_data['sub_namespace'];
 
             if (strpos($handler_string, '@') === false) {
-                die("Erro Blumiga: Formato de rota inválido. Use 'controllers/pasta/arquivoController@funcao'.");
+                error_log("Erro Blumiga: Formato de rota inválido. Use 'controllers/pasta/arquivoController@funcao'.");
             }
 
             list($controller_path, $function_name) = explode('@', $handler_string);
@@ -50,7 +55,7 @@ if (isset($blumiga_routes[$blumiga_routeMethod])) {
             if (file_exists($file_path)) {
                 include_once $file_path;
             } else {
-                die("Erro Blumiga: O arquivo de controller '{$file_path}' não foi encontrado.");
+                error_log("Erro Blumiga: O arquivo de controller '{$file_path}' não foi encontrado.");
             }
 
             // Substitui as barras do caminho e monta: \Blumiga\{sub_ns}{caminho_do_controller}\{funcao}
@@ -61,7 +66,7 @@ if (isset($blumiga_routes[$blumiga_routeMethod])) {
                 $full_function(...$matches);
                 $route_found = true;
             } else {
-                die("Erro Blumiga: A função '{$function_name}' não existe dentro do namespace '{$full_function}'.");
+                error_log("Erro Blumiga: A função '{$function_name}' não existe dentro do namespace '{$full_function}'.");
             }
             break;
         }
