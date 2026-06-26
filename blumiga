@@ -130,8 +130,6 @@ function criarController(string $nome): void {
 
 namespace Blumiga\controllers{$namespaceAdicional};
 
-if (!defined('blumiga')) exit;
-
 /**
  * Função index padrão do controller funcional
  */
@@ -158,22 +156,15 @@ function criarModel(string $nome): void {
 // Model: {$nome}
 // Gerado em: " . date('Y-m-d H:i:s') . "
 
-namespace Blumiga\models;
-
-if (!defined('blumiga')) exit;
+namespace Blumiga\\models\\$nome;
 
 use Blumiga\\database\\select;
-use Blumiga\\database\\insert;
 
-class {$nome} {
-    protected string \$table = '{$nomeTabela}';
-
-    public function buscarTodos(): array {
-        \$db = new select();
-        \$dados = \$db->table('{$nomeTabela}')->fetchArray();
-        \$db->close();
-        return \$dados ?? [];
-    }
+function getData():array {
+    \$db = new select();
+    \$dados = \$db->table('{$nomeTabela}')->fetchArray();
+    \$db->close();
+    return \$dados ?? [];
 }
 ";
 
@@ -203,8 +194,6 @@ function criarView(string $nome): void {
     $template = "<?php
 // View: " . ($subPasta ? $subPasta . '/' : '') . "{$nomeArquivo}
 // Gerado em: " . date('Y-m-d H:i:s') . "
-
-if (!defined('blumiga')) exit;
 ?>
 <!DOCTYPE html>
 <html lang=\"pt-BR\">
