@@ -101,6 +101,8 @@ routeGET('/contato', 'contatoController@pageContato', 'site.contato');
 
 // Rota Dinâmica Capturada com Parâmetros
 routeGET('/produto/{id}/{slug}', 'produtoController@detalhe', 'produto.ver');
+// ou
+routeGET('/produto/{id:[0-9]+}/{slug}', 'produtoController@detalhe', 'produto.ver');
 
 // Define um grupo de rotas que compartilham o mesmo prefixo de URL e a mesma pasta de controllers
 routeGroup('/admin', 'admin', function() {
