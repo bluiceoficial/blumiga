@@ -10,44 +10,60 @@ $blumiga_routes = [];
 $blumiga_named_routes = [];
 $blumiga_404_handler = null;
 $blumiga_current_sub_namespace = '';
+$blumiga_current_url_prefix = '';
 
-/**
- * Agrupa rotas sob um sub-namespace / sub-pasta física
- */
-function routeGroup(string $sub_namespace, callable $callback): void {
-    global $blumiga_current_sub_namespace;
+function routeGroup(string $url_prefix, string $sub_namespace, callable $callback): void {
+    global $blumiga_current_sub_namespace, $blumiga_current_url_prefix;
 
+    // Salva os estados anteriores para permitir grupos aninhados no futuro, se necessário
     $previous_sub = $blumiga_current_sub_namespace;
+    $previous_prefix = $blumiga_current_url_prefix;
+
+    // Trata e define o novo namespace e prefixo de URL
     $blumiga_current_sub_namespace = trim($sub_namespace, '\\') . '\\';
+
+    // Garante que o prefixo comece com '/' e não termine com '/'
+    $url_prefix = '/' . trim($url_prefix, '/');
+    $blumiga_current_url_prefix = $previous_prefix . ($url_prefix === '/' ? '' : $url_prefix);
 
     $callback();
 
+    // Restaura os estados anteriores após a execução do callback
     $blumiga_current_sub_namespace = $previous_sub;
+    $blumiga_current_url_prefix = $previous_prefix;
 }
 
 function routeGET(string $path, string $handler, string $name = ''): void {
-    global $blumiga_routes, $blumiga_named_routes, $blumiga_current_sub_namespace;
+    global $blumiga_routes, $blumiga_named_routes, $blumiga_current_sub_namespace, $blumiga_current_url_prefix;
 
-    $blumiga_routes['GET'][$path] = [
+    // Concatena o prefixo atual com o path da rota limpa
+    $full_path = $blumiga_current_url_prefix . '/' . trim($path, '/');
+    $full_path = $full_path === '/' ? '/' : rtrim($full_path, '/');
+
+    $blumiga_routes['GET'][$full_path] = [
         'handler'       => $handler,
         'sub_namespace' => $blumiga_current_sub_namespace
     ];
 
     if ($name) {
-        $blumiga_named_routes[$name] = $path;
+        $blumiga_named_routes[$name] = $full_path;
     }
 }
 
 function routePOST(string $path, string $handler, string $name = ''): void {
-    global $blumiga_routes, $blumiga_named_routes, $blumiga_current_sub_namespace;
+    global $blumiga_routes, $blumiga_named_routes, $blumiga_current_sub_namespace, $blumiga_current_url_prefix;
 
-    $blumiga_routes['POST'][$path] = [
+    // Concatena o prefixo atual com o path da rota limpa
+    $full_path = $blumiga_current_url_prefix . '/' . trim($path, '/');
+    $full_path = $full_path === '/' ? '/' : rtrim($full_path, '/');
+
+    $blumiga_routes['POST'][$full_path] = [
         'handler'       => $handler,
         'sub_namespace' => $blumiga_current_sub_namespace
     ];
 
     if ($name) {
-        $blumiga_named_routes[$name] = $path;
+        $blumiga_named_routes[$name] = $full_path;
     }
 }
 
