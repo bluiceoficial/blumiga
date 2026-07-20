@@ -1,0 +1,35 @@
+{
+    "name": "bluiceoficial/blumiga",
+    "version": "1.0.0-alpha",
+    "description": "Blumiga é um microframework MVC para PHP com arquitetura procedural, modular e de alta performance.",
+    "keywords": ["php", "framework", "microframework", "mvc", "procedural", "functional", "modular", "lightweight", "composer", "blumiga"],
+    "type": "project",
+    "authors": [
+        {
+            "name": "Murilo Gomes Julio",
+            "email": "murilo@bluice.com.br",
+            "homepage": "https://www.bluice.com.br"
+        }
+    ],
+    "_comment": [
+        "Copyright (C) 2026 Murilo Gomes Julio"
+    ],
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Blumiga\\": "libs/"
+        }
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "preferred-install": "dist",
+        "sort-packages": true
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "scripts": {
+        "post-root-package-install": [
+            "@php -r \"file_exists('config/config.php') || copy('config/config.example.php', 'config/config.php');\""
+        ]
+    }
+}
