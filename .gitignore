@@ -8,5 +8,5 @@ logs/*
 # config
 config/config.php
 
-# app
-app/
+# agents
+AGENTS.md
