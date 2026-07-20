@@ -1,0 +1,436 @@
+#!/usr/bin/env php
+<?php
+// Copyright (C) 2026 Murilo Gomes Julio
+// SPDX-License-Identifier: MIT
+
+// Site: https://www.bluice.com.br
+
+if (php_sapi_name() !== 'cli') {
+    die('Este script só pode ser executado via linha de comando.');
+}
+
+define('blumiga', true);
+
+// 1. Carrega as configurações globais e o Autoload do Composer
+require_once __DIR__ . '/config/config.php';
+require_once __DIR__ . '/vendor/autoload.php';
+
+// Captura os argumentos do terminal
+$comando = $argv[1] ?? 'help';
+$parametro = $argv[2] ?? null;
+
+switch ($comando) {
+    case 'help':
+        exibirAjuda();
+        break;
+
+    case 'serve':
+        $porta = $parametro ?? '8080';
+        echo "\033[32m🚀 Iniciando o servidor de desenvolvimento do Blumiga...\033[0m\n";
+        echo "Acesse: http://localhost:{$porta}\n";
+        echo "Pressione Ctrl+C para encerrar.\n";
+        passthru("php -S localhost:{$porta} -t public public/index.php");
+        break;
+
+    case 'make:controller':
+        if (!$parametro) {
+            die("\033[31mErro: Informe o nome do controller. Ex: php blumiga make:controller contatoController\033[0m\n");
+        }
+        criarController($parametro);
+        break;
+
+    case 'make:model':
+        if (!$parametro) {
+            die("\033[31mErro: Informe o nome do model. Ex: php blumiga make:model usuarioModel\033[0m\n");
+        }
+        criarModel($parametro);
+        break;
+
+    case 'make:view':
+        if (!$parametro) {
+            die("\033[31mErro: Informe o nome da view. Ex: php blumiga make:view contato/index\033[0m\n");
+        }
+        criarView($parametro);
+        break;
+
+    case 'make:migration':
+        if (!$parametro) {
+            die("\033[31mErro: Informe o nome da migration. Ex: php blumiga make:migration criar_usuarios\033[0m\n");
+        }
+        criarMigration($parametro);
+        break;
+
+    case 'make:seeder':
+        if (!$parametro) {
+            die("\033[31mErro: Informe o nome do seeder. Ex: php blumiga make:seeder usuarios_padrao\033[0m\n");
+        }
+        criarSeeder($parametro);
+        break;
+
+    case 'make:middleware':
+        if (!$parametro) {
+            die("\033[31mErro: Informe o nome do middleware. Ex: php blumiga make:middleware auth\033[0m\n");
+        }
+        criarMiddleware($parametro);
+        break;
+
+    case 'migrate':
+        executarMigrations();
+        break;
+
+    case 'migrate:rollback':
+        executarRollbackMigrations();
+        break;
+
+    case 'db:seed':
+        executarSeeders($parametro);
+        break;
+
+    case 'db:seed:rollback':
+        executarRollbackSeeders($parametro);
+        break;
+
+    default:
+        echo "\033[31mComando '{$comando}' não reconhecido.\033[0m\n";
+        exibirAjuda();
+        break;
+}
+
+// --- FUNÇÕES AUXILIARES DA CLI ---
+
+function exibirAjuda() {
+    echo "\n\033[34m⚡ Blumiga CLI Funcional ⚡\033[0m\n\n";
+    echo "\033[33mUso:\033[0m\n";
+    echo "  php blumiga [comando] [argumento]\n\n";
+    echo "\033[33mComandos Disponíveis:\033[0m\n";
+    echo "  \033[32mserve\033[0m [porta]         Inicia o servidor de desenvolvimento (padrão: 8080).\n";
+    echo "  \033[32mmake:controller\033[0m        Cria um novo controller funcional dentro de app/controllers.\n";
+    echo "  \033[32mmake:model\033[0m             Cria um novo model dentro de app/models.\n";
+    echo "  \033[32mmake:view\033[0m              Cria um novo arquivo de view dentro de app/views.\n";
+    echo "  \033[32mmake:migration\033[0m         Cria um arquivo de migration funcional (up/down).\n";
+    echo "  \033[32mmake:seeder\033[0m            Cria um arquivo de seeder funcional (run/down).\n";
+    echo "  \033[32mmake:middleware\033[0m        Cria um middleware funcional.\n";
+    echo "  \033[32mmigrate\033[0m                Executa as funções 'up' de todas as migrations.\n";
+    echo "  \033[32mmigrate:rollback\033[0m       Executa as funções 'down' das migrations (ordem reversa).\n";
+    echo "  \033[32mdb:seed\033[0m [nome]         Alimenta o banco executando as funções 'run'.\n";
+    echo "  \033[32mdb:seed:rollback\033[0m [nome] Limpa os dados executando as funções 'down' dos seeders.\n";
+    echo "  \033[32mhelp\033[0m                   Exibe este menu de ajuda.\n\n";
+}
+
+function criarController(string $nome): void {
+    $diretorio = __DIR__ . '/app/controllers';
+
+    $partes = explode('/', $nome);
+    $nomeClasse = array_pop($partes);
+    $subPasta = implode('/', $partes);
+
+    $caminhoDiretorio = $diretorio . ($subPasta ? '/' . $subPasta : '');
+    if (!is_dir($caminhoDiretorio)) {
+        mkdir($caminhoDiretorio, 0755, true);
+    }
+
+    $ns = $subPasta
+        ? 'Blumiga\\controllers\\' . str_replace('/', '\\', $subPasta) . '\\' . $nomeClasse
+        : 'Blumiga\\controllers\\' . $nomeClasse;
+
+    $caminhoCompleto = "{$caminhoDiretorio}/{$nomeClasse}.php";
+
+    $template = "<?php
+// Nome: {$ns}
+// Gerado em: " . date('Y-m-d H:i:s') . "
+
+namespace {$ns};
+
+function index(): void {
+    // Exemplo: view('home/index');
+    echo \"Bem-vindo ao Controller Funcional {$nomeClasse}!\";
+}
+";
+
+    file_put_contents($caminhoCompleto, $template);
+    echo "\033[32m✔ Controller criado em:\033[0m app/controllers/" . ($subPasta ? $subPasta . '/' : '') . "{$nomeClasse}.php\n";
+}
+
+function criarModel(string $nome): void {
+    $diretorio = __DIR__ . '/app/models';
+    if (!is_dir($diretorio)) {
+        mkdir($diretorio, 0755, true);
+    }
+
+    $caminhoCompleto = "{$diretorio}/{$nome}.php";
+
+    $template = "<?php
+// Model: {$nome}
+// Gerado em: " . date('Y-m-d H:i:s') . "
+
+namespace Blumiga\\models\\{$nome};
+
+if (!defined('blumiga')) exit;
+
+function getData(): array {
+    // Exemplo: carregar dados via model('{$nome}')
+    return [];
+}
+
+function getById(int \$id): array {
+    return [];
+}
+";
+
+    file_put_contents($caminhoCompleto, $template);
+    echo "\033[32m✔ Model criado em:\033[0m app/models/{$nome}.php\n";
+}
+
+function criarView(string $nome): void {
+    $diretorio = __DIR__ . '/app/views';
+
+    $partes = explode('/', $nome);
+    $nomeArquivo = array_pop($partes);
+    $subPasta = implode('/', $partes);
+
+    $caminhoDiretorio = $diretorio . ($subPasta ? '/' . $subPasta : '');
+    if (!is_dir($caminhoDiretorio)) {
+        mkdir($caminhoDiretorio, 0755, true);
+    }
+
+    if (!str_ends_with($nomeArquivo, '.php')) {
+        $nomeArquivo .= '.php';
+    }
+
+    $caminhoCompleto = "{$caminhoDiretorio}/{$nomeArquivo}";
+
+    $template = "<?php
+// View: " . ($subPasta ? $subPasta . '/' : '') . "{$nomeArquivo}
+// Gerado em: " . date('Y-m-d H:i:s') . "
+
+if (!defined('blumiga')) exit;
+?>
+<!DOCTYPE html>
+<html lang=\"pt-BR\">
+<head>
+    <meta charset=\"UTF-8\">
+    <title>Blumiga View</title>
+</head>
+<body>
+    <h1>Estilização Funcional Blumiga</h1>
+    <p>Sua view está pronta para renderizar os dados do escopo.</p>
+</body>
+</html>
+";
+
+    file_put_contents($caminhoCompleto, $template);
+    echo "\033[32m✔ View criada em:\033[0m app/views/" . ($subPasta ? $subPasta . '/' : '') . "{$nomeArquivo}\n";
+}
+
+function criarMigration(string $nome): void {
+    $diretorio = __DIR__ . '/app/database/migrations';
+    if (!is_dir($diretorio)) {
+        mkdir($diretorio, 0755, true);
+    }
+
+    $timestamp = date('Y_m_d_His');
+    $nomeArquivo = "{$timestamp}_{$nome}.php";
+    $caminhoCompleto = "{$diretorio}/{$nomeArquivo}";
+
+    $template = "<?php
+// Migration Funcional: {$nome}
+// Gerado em: " . date('Y-m-d H:i:s') . "
+
+return [
+    'up' => function() {
+        // Exemplo com Blumiga\\database\\table (requer blumiga/database):
+        // \$schema = new table();
+        // \$schema->table('nome_tabela')
+        //        ->int()->primaryKey()->autoIncrement()->add('id')
+        //        ->varchar(150)->add('nome')
+        //        ->create();
+        // \$schema->close();
+
+        echo \"\033[32mMigration Funcional UP executada com sucesso!\033[0m\\n\";
+    },
+
+    'down' => function() {
+        echo \"\033[33mMigration Funcional DOWN (Rollback) executada com sucesso!\033[0m\\n\";
+    }
+];
+";
+
+    file_put_contents($caminhoCompleto, $template);
+    echo "\033[32m✔ Migration funcional criada em:\033[0m app/database/migrations/{$nomeArquivo}\n";
+}
+
+function criarSeeder(string $nome): void {
+    $diretorio = __DIR__ . '/app/database/seeders';
+    if (!is_dir($diretorio)) {
+        mkdir($diretorio, 0755, true);
+    }
+
+    $nomeArquivo = "{$nome}Seeder.php";
+    $caminhoCompleto = "{$diretorio}/{$nomeArquivo}";
+
+    $template = "<?php
+// Seeder Funcional: {$nome}
+// Gerado em: " . date('Y-m-d H:i:s') . "
+
+return [
+    'run' => function() {
+        // Exemplo com Blumiga\\database\\insert (requer blumiga/database):
+        // \$db = new insert();
+        // \$db->table('nome_tabela')->add('nome', 'Dados Iniciais')->insert();
+        // \$db->close();
+
+        echo \"\033[32mSeeder Funcional {$nome} populado com sucesso!\033[0m\\n\";
+    },
+
+    'down' => function() {
+        echo \"\033[33mSeeder Funcional {$nome} limpo com sucesso (Rollback)!\033[0m\\n\";
+    }
+];
+";
+
+    file_put_contents($caminhoCompleto, $template);
+    echo "\033[32m✔ Seeder funcional criado em:\033[0m app/database/seeders/{$nomeArquivo}\n";
+}
+
+function criarMiddleware(string $nome): void {
+    $diretorio = __DIR__ . '/app/middleware';
+    if (!is_dir($diretorio)) {
+        mkdir($diretorio, 0755, true);
+    }
+
+    $caminhoCompleto = "{$diretorio}/{$nome}.php";
+
+    $template = "<?php
+// Middleware: {$nome}
+// Gerado em: " . date('Y-m-d H:i:s') . "
+
+namespace Blumiga\\middleware\\{$nome};
+
+if (!defined('blumiga')) exit;
+
+function run(callable \$next, mixed \$param = null): void {
+    \$next();
+}
+";
+
+    file_put_contents($caminhoCompleto, $template);
+    echo "\033[32m✔ Middleware criado em:\033[0m app/middleware/{$nome}.php\n";
+
+    echo "\033[33m📌 Use-o em rotas: routeGET('/rota', 'ctrl@func', 'nome', ['{$nome}@run']);\033[0m\n";
+}
+
+function executarMigrations() {
+    echo "\033[33mBuscando e executando migrations funcionais...\033[0m\n";
+    $diretorio = __DIR__ . '/app/database/migrations';
+
+    if (!is_dir($diretorio)) {
+        die("Nenhuma migration encontrada.\n");
+    }
+
+    $arquivos = glob("{$diretorio}/*.php");
+    sort($arquivos);
+
+    foreach ($arquivos as $arquivo) {
+        echo "Running UP: " . basename($arquivo) . "...\n";
+        $migration = require $arquivo;
+
+        if (isset($migration['up']) && is_callable($migration['up'])) {
+            $migration['up']();
+        }
+    }
+
+    echo "\n\033[32m✔ Migrations executadas com sucesso!\033[0m\n";
+}
+
+function executarRollbackMigrations() {
+    echo "\033[33mIniciando Rollback das Migrations Funcionais (Ordem Reversa)...\033[0m\n";
+    $diretorio = __DIR__ . '/app/database/migrations';
+
+    if (!is_dir($diretorio)) {
+        die("Nenhuma migration encontrada.\n");
+    }
+
+    $arquivos = glob("{$diretorio}/*.php");
+    rsort($arquivos);
+
+    foreach ($arquivos as $arquivo) {
+        echo "Running DOWN: " . basename($arquivo) . "...\n";
+        $migration = require $arquivo;
+
+        if (isset($migration['down']) && is_callable($migration['down'])) {
+            $migration['down']();
+        } else {
+            echo "\033[31mErro: Função 'down' não encontrada ou inválida em " . basename($arquivo) . "\033[0m\n";
+        }
+    }
+
+    echo "\n\033[32m✔ Rollback concluído!\033[0m\n";
+}
+
+function executarSeeders(?string $especifico = null): void {
+    $diretorio = __DIR__ . '/app/database/seeders';
+
+    if (!is_dir($diretorio)) {
+        die("Nenhum seeder encontrado.\n");
+    }
+
+    if ($especifico) {
+        $arquivo = "{$diretorio}/{$especifico}Seeder.php";
+        if (file_exists($arquivo)) {
+            echo "Seeding: " . basename($arquivo) . "...\n";
+            $seeder = require $arquivo;
+            if (isset($seeder['run']) && is_callable($seeder['run'])) {
+                $seeder['run']();
+            }
+        } else {
+            echo "\033[31mSeeder '{$especifico}Seeder.php' não encontrado.\033[0m\n";
+        }
+    } else {
+        echo "\033[33mExecutando todos os seeders funcionais encontrados...\033[0m\n";
+        $arquivos = glob("{$diretorio}/*.php");
+        sort($arquivos);
+        foreach ($arquivos as $arquivo) {
+            echo "Seeding: " . basename($arquivo) . "...\n";
+            $seeder = require $arquivo;
+            if (isset($seeder['run']) && is_callable($seeder['run'])) {
+                $seeder['run']();
+            }
+        }
+    }
+
+    echo "\n\033[32m✔ Seeders executados com sucesso!\033[0m\n";
+}
+
+function executarRollbackSeeders(?string $especifico = null): void {
+    $diretorio = __DIR__ . '/app/database/seeders';
+
+    if (!is_dir($diretorio)) {
+        die("Nenhum seeder encontrado.\n");
+    }
+
+    if ($especifico) {
+        $arquivo = "{$diretorio}/{$especifico}Seeder.php";
+        if (file_exists($arquivo)) {
+            echo "Rolling back Seeder: " . basename($arquivo) . "...\n";
+            $seeder = require $arquivo;
+            if (isset($seeder['down']) && is_callable($seeder['down'])) {
+                $seeder['down']();
+            }
+        } else {
+            echo "\033[31mSeeder '{$especifico}Seeder.php' não encontrado.\033[0m\n";
+        }
+    } else {
+        echo "\033[33mLimpando todos os seeders funcionais (Ordem Reversa)...\033[0m\n";
+        $arquivos = glob("{$diretorio}/*.php");
+        rsort($arquivos);
+        foreach ($arquivos as $arquivo) {
+            echo "Rolling back Seeder: " . basename($arquivo) . "...\n";
+            $seeder = require $arquivo;
+            if (isset($seeder['down']) && is_callable($seeder['down'])) {
+                $seeder['down']();
+            }
+        }
+    }
+
+    echo "\n\033[32m✔ Rollback concluído!\033[0m\n";
+}
