@@ -10,12 +10,6 @@ $blumiga_404_handler = null;
 $blumiga_current_sub_namespace = '';
 $blumiga_current_url_prefix = '';
 $blumiga_current_middleware = [];
-$blumiga_middleware_registry = [];
-
-function routeMiddleware(string $name, callable $handler): void {
-    global $blumiga_middleware_registry;
-    $blumiga_middleware_registry[$name] = $handler;
-}
 
 function routeGroup(string $url_prefix, string $sub_namespace, callable $callback, array $middleware = []): void {
     global $blumiga_current_sub_namespace, $blumiga_current_url_prefix, $blumiga_current_middleware;
@@ -44,10 +38,34 @@ function routeGET(string $path, string|callable $handler, string $name = '', arr
     $full_path = $blumiga_current_url_prefix . '/' . trim($path, '/');
     $full_path = $full_path === '/' ? '/' : rtrim($full_path, '/');
 
+    $resolved = [];
+    foreach (array_merge($blumiga_current_middleware, $middleware) as $mw) {
+        if (str_contains($mw, '@')) {
+            $parts = explode('@', $mw);
+            $path_mw = $parts[0];
+            $func = $parts[1] ?? 'run';
+            $param_suffix = '';
+            if (str_contains($func, ':')) {
+                [$func, $param] = explode(':', $func, 2);
+                $param_suffix = ':' . $param;
+            }
+            $filePath = dirname(__FILE__, 2) . '/app/middleware/' . $path_mw . '.php';
+            if (file_exists($filePath)) {
+                require_once $filePath;
+            } else {
+                error_log("Blumiga Erro: Middleware '{$filePath}' não encontrado.");
+                continue;
+            }
+            $resolved[] = '\\Blumiga\\middleware\\' . str_replace('/', '\\', $path_mw) . '\\' . $func . $param_suffix;
+        } else {
+            $resolved[] = $mw;
+        }
+    }
+
     $blumiga_routes['GET'][$full_path] = [
         'handler'       => $handler,
         'sub_namespace' => $blumiga_current_sub_namespace,
-        'middleware'    => array_merge($blumiga_current_middleware, $middleware),
+        'middleware'    => $resolved,
     ];
 
     if ($name) {
@@ -61,10 +79,34 @@ function routePOST(string $path, string|callable $handler, string $name = '', ar
     $full_path = $blumiga_current_url_prefix . '/' . trim($path, '/');
     $full_path = $full_path === '/' ? '/' : rtrim($full_path, '/');
 
+    $resolved = [];
+    foreach (array_merge($blumiga_current_middleware, $middleware) as $mw) {
+        if (str_contains($mw, '@')) {
+            $parts = explode('@', $mw);
+            $path_mw = $parts[0];
+            $func = $parts[1] ?? 'run';
+            $param_suffix = '';
+            if (str_contains($func, ':')) {
+                [$func, $param] = explode(':', $func, 2);
+                $param_suffix = ':' . $param;
+            }
+            $filePath = dirname(__FILE__, 2) . '/app/middleware/' . $path_mw . '.php';
+            if (file_exists($filePath)) {
+                require_once $filePath;
+            } else {
+                error_log("Blumiga Erro: Middleware '{$filePath}' não encontrado.");
+                continue;
+            }
+            $resolved[] = '\\Blumiga\\middleware\\' . str_replace('/', '\\', $path_mw) . '\\' . $func . $param_suffix;
+        } else {
+            $resolved[] = $mw;
+        }
+    }
+
     $blumiga_routes['POST'][$full_path] = [
         'handler'       => $handler,
         'sub_namespace' => $blumiga_current_sub_namespace,
-        'middleware'    => array_merge($blumiga_current_middleware, $middleware),
+        'middleware'    => $resolved,
     ];
 
     if ($name) {
@@ -79,7 +121,7 @@ function route404(mixed $function): void {
 
 function dispatchRoute(string $path, string $method): void
 {
-    global $blumiga_routes, $blumiga_404_handler, $blumiga_middleware_registry;
+    global $blumiga_routes, $blumiga_404_handler;
 
     http_response_code(200);
     $blumiga_routeMethod = $method;
@@ -108,23 +150,26 @@ function dispatchRoute(string $path, string $method): void
                             $callable(...$matches);
                             $route_found = true;
                         };
+                        $middleware_failed = false;
                         for ($i = count($middleware_list) - 1; $i >= 0; $i--) {
                             $name = $middleware_list[$i];
                             $param = null;
                             if (str_contains($name, ':')) {
                                 [$name, $param] = explode(':', $name, 2);
                             }
-                            $current = $next;
-                            if (!isset($blumiga_middleware_registry[$name])) {
-                                error_log("Erro Blumiga: Middleware '{$name}' não registrado.");
-                                continue;
+                            if (!function_exists($name)) {
+                                error_log("Erro Blumiga: Middleware '{$name}' não é uma função válida.");
+                                $middleware_failed = true;
+                                break;
                             }
-                            $mw = $blumiga_middleware_registry[$name];
-                            $next = function () use ($mw, $current, $param) {
-                                $mw($current, $param);
+                            $current = $next;
+                            $next = function () use ($name, $current, $param) {
+                                $name($current, $param);
                             };
                         }
-                        $next();
+                        if (!$middleware_failed) {
+                            $next();
+                        }
                     } else {
                         $callable(...$matches);
                         $route_found = true;
@@ -134,6 +179,7 @@ function dispatchRoute(string $path, string $method): void
 
                 if (strpos($handler_entry, '@') === false) {
                     error_log("Erro Blumiga: Formato de rota inválido. Use 'controllers/pasta/arquivoController@funcao'.");
+                    break;
                 }
 
                 list($controller_path, $function_name) = explode('@', $handler_entry);
@@ -148,7 +194,7 @@ function dispatchRoute(string $path, string $method): void
                 }
 
                 $formatted_ns = str_replace('/', '\\', $controller_path);
-                $full_function = '\\Blumiga\\' . $sub_ns . $formatted_ns . '\\' . $function_name;
+                $full_function = '\\Blumiga\\controllers\\' . $sub_ns . $formatted_ns . '\\' . $function_name;
 
                 if (function_exists($full_function)) {
                     $middleware_list = $route_data['middleware'] ?? [];
@@ -158,23 +204,26 @@ function dispatchRoute(string $path, string $method): void
                             $full_function(...$matches);
                             $route_found = true;
                         };
+                        $middleware_failed = false;
                         for ($i = count($middleware_list) - 1; $i >= 0; $i--) {
                             $name = $middleware_list[$i];
                             $param = null;
                             if (str_contains($name, ':')) {
                                 [$name, $param] = explode(':', $name, 2);
                             }
-                            $current = $next;
-                            if (!isset($blumiga_middleware_registry[$name])) {
-                                error_log("Erro Blumiga: Middleware '{$name}' não registrado.");
-                                continue;
+                            if (!function_exists($name)) {
+                                error_log("Erro Blumiga: Middleware '{$name}' não é uma função válida.");
+                                $middleware_failed = true;
+                                break;
                             }
-                            $mw = $blumiga_middleware_registry[$name];
-                            $next = function () use ($mw, $current, $param) {
-                                $mw($current, $param);
+                            $current = $next;
+                            $next = function () use ($name, $current, $param) {
+                                $name($current, $param);
                             };
                         }
-                        $next();
+                        if (!$middleware_failed) {
+                            $next();
+                        }
                     } else {
                         $full_function(...$matches);
                         $route_found = true;
