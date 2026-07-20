@@ -110,6 +110,12 @@ function e(?string $value, int $flags = ENT_QUOTES | ENT_SUBSTITUTE, string $enc
     return (is_null($value)) ? '' : htmlspecialchars($value, $flags, $encoding);
 }
 
+// Anti XSS para contexto JavaScript
+function eJS(string $value): string
+{
+    return json_encode($value, JSON_UNESCAPED_UNICODE);
+}
+
 // Forms
 function inputGET(string $name, int $filter = FILTER_UNSAFE_RAW, array|int $options = 0): mixed
 {
@@ -190,7 +196,7 @@ function requestURI(): string
 function getClientIP(): string
 {
     // Cloudflare
-    if (!empty($_SERVER['HTTP_CF_CONNECTING_IP'])) {
+    if (!empty($_SERVER['HTTP_CF_CONNECTING_IP']) && filter_var($_SERVER['HTTP_CF_CONNECTING_IP'], FILTER_VALIDATE_IP)) {
         return $_SERVER['HTTP_CF_CONNECTING_IP'];
     }
 
@@ -210,43 +216,27 @@ function getClientIP(): string
 // Redirecionar
 function redirect(string $url, mixed $params = '')
 {
-    $sParams = '?';
-
     if (is_array($params)) {
-        foreach ($params as $name => $value) {
-            $sParams .= sprintf('%s=%s&', $name, $value);
-        }
-    } else {
-        $sParams = '';
+        $url .= '?' . http_build_query($params);
     }
 
-    $sParams = rtrim($sParams, '&');
-
-    header('Location: ' . $url . $sParams);
+    header('Location: ' . $url);
     exit;
 }
 
 // JavaScript
 function windowAlert(string $message)
 {
-    printf("<script>window.alert('%s');</script>", $message);
+    printf("<script>window.alert(%s);</script>", eJS($message));
 }
 
 function redirectJS(string $url, mixed $params = '')
 {
-    $sParams = '?';
-
     if (is_array($params)) {
-        foreach ($params as $name => $value) {
-            $sParams .= sprintf('%s=%s&', $name, $value);
-        }
-    } else {
-        $sParams = '';
+        $url .= '?' . http_build_query($params);
     }
 
-    $sParams = rtrim($sParams, '&');
-
-    echo sprintf("<script>window.location.assign('%s%s');</script>", $url, $sParams);
+    echo '<script>window.location.assign(' . eJS($url) . ');</script>';
     exit;
 }
 
@@ -538,3 +528,4 @@ function session(?string $key = null, mixed $default = null): mixed
     }
     return $_SESSION[$key] ?? $default;
 }
+
