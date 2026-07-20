@@ -1,0 +1,69 @@
+<Files .htaccess>
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order deny,allow
+        Deny from all
+    </IfModule>
+</Files>
+
+Options -Indexes
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Força WWW se não houver
+    RewriteCond %{HTTP_HOST} !^www\. [NC]
+    RewriteRule ^(.*)$ http://www.%{HTTP_HOST}/$1 [R=301,L]
+
+    # Força HTTPS se o tráfego vier por HTTP (Porta 80)
+    RewriteCond %{HTTPS} off
+    RewriteRule ^(.*)$ https://%{HTTP_HOST}/$1 [R=301,L]
+</IfModule>
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+
+    # Se o ativo estático (CSS, JS, Imagem) existir na pasta public, serve direto
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+
+    # Caso contrário, envia para o index.php local da public com os parâmetros (QSA)
+    RewriteRule ^(.*)$ index.php [L,QSA]
+</IfModule>
+
+<IfModule mod_headers.c>
+    # Imagens e Mídias (Cache público de 1 mês)
+    <FilesMatch "\.(ico|jpe?g|png|gif|swf|svg|webp)$">
+        Header set Cache-Control "max-age=2592000, public"
+    </FilesMatch>
+
+    # CSS (Cache público de 1 semana)
+    <FilesMatch "\.(css)$">
+        Header set Cache-Control "max-age=604800, public"
+    </FilesMatch>
+
+    # JavaScript (Cache privado de 1 mês)
+    <FilesMatch "\.(js)$">
+        Header set Cache-Control "max-age=2592000, private"
+    </FilesMatch>
+
+    # Documentos Dinâmicos (Cache curto, valida sempre no servidor)
+    <FilesMatch "\.(x?html?|php)$">
+        Header set Cache-Control "max-age=600, private, must-revalidate"
+    </FilesMatch>
+
+    # Desativa ETags para evitar overhead de validação redundante
+    Header unset ETag
+</IfModule>
+
+FileETag None
+
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/css application/json application/javascript text/xml application/xml application/xhtml+xml application/rss+xml application/atom+xml application/rdf+xml application/x-font application/x-font-opentype application/x-font-otf application/x-font-truetype application/x-font-ttf image/svg+xml font/opentype font/otf font/ttf font/eot font/woff font/woff2
+
+    # Evita re-comprimir mídias que já possuem compressão nativa
+    SetEnvIfNoCase Request_URI \.(?:gif|jpe?g|png|webp)$ no-gzip
+</IfModule>
