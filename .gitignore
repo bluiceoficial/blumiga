@@ -1,0 +1,9 @@
+# composer
+vendor/
+composer.lock
+
+# logs
+logs/*
+
+# config
+config/config.php
